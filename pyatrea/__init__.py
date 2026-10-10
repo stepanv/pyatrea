@@ -29,6 +29,27 @@ class AtreaProgram(IntEnum):
     TEMPORARY = 2
 
 
+class AtreaPowerMode(IntEnum):
+    """Discrete Power_2Z codes, distinct from percentage fan speeds."""
+
+    OFF = 0
+    MIN_VENT = 10
+    NORM_VENT = 11
+    MAX_VENT = 12
+    MIN_CIRC = 20
+    NORM_CIRC = 21
+    MAX_CIRC = 22
+    MIN_CIRC_MIN_VENT = 30
+    MIN_CIRC_NORM_VENT = 31
+    MIN_CIRC_MAX_VENT = 32
+    NORM_CIRC_MIN_VENT = 33
+    NORM_CIRC_NORM_VENT = 34
+    NORM_CIRC_MAX_VENT = 35
+    MAX_CIRC_MIN_VENT = 36
+    MAX_CIRC_NORM_VENT = 37
+    MAX_CIRC_MAX_VENT = 38
+
+
 class AtreaMode(IntEnum):
     OFF = 0
     AUTOMATIC = 1
@@ -526,6 +547,22 @@ class Atrea:
 
         self.setCommand("H10708", power)
         self.setCommand("H01020", power)
+        return True
+
+    def setPowerMode(self, mode):
+        """Queue a discrete power code for a unit using Power_2Z.
+
+        Callers must explicitly select discrete operation. Codes overlap with
+        valid percentages, so this must not be inferred from a numeric value.
+        The unit's current operating mode can further restrict valid choices.
+        """
+        if not isinstance(mode, AtreaPowerMode):
+            return False
+        params = self.getParams()
+        status = self.getStatus()
+        if "H10708" not in params.get("ids", []) and "H10708" not in (status or {}):
+            return False
+        self.setCommand("H10708", int(mode))
         return True
 
     def exec(self):
