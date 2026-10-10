@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyatrea",
-    version="0.10.0",
+    version="0.10.1.dev1",
     author="Juraj Nyíri",
     author_email="juraj.nyiri@gmail.com",
     description="Python library for communication with Atrea ventilation units",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/JurajNyiri/pyatrea",
+    url="https://github.com/stepanv/pyatrea",
     packages=setuptools.find_packages(),
     install_requires=["requests", "demjson3"],
     classifiers=[
