@@ -46,3 +46,21 @@ parameter metadata. Register meanings remain the responsibility of the caller.
 ```
 atrea.executeOneShotCommand(register_id, value)
 ```
+
+### Set discrete ventilation/circulation power:
+
+For units configured to use the `Power_2Z` choices in their web UI, use the
+explicit discrete API. The numeric codes overlap with percentages, so the
+library does not infer the unit's power type from a number. The current operating
+mode may further restrict the available choices, just as in the unit's web UI.
+
+```python
+from pyatrea import AtreaPowerMode
+
+if atrea.setPowerMode(AtreaPowerMode.NORM_CIRC_MIN_VENT):
+    atrea.exec()
+```
+
+`OFF`, `MIN_VENT`, and `NORM_VENT` preserve codes 0, 10, and 11. Discrete commands
+only target the supported `H10708` register. For percentage devices, continue
+using `setPower(percentage)` with its existing 12–100 range.
