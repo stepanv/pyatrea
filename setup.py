@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/JurajNyiri/pyatrea",
     packages=setuptools.find_packages(),
-    install_requires=["requests"],
+    install_requires=["requests", "demjson3"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
