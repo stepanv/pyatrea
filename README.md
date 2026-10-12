@@ -46,3 +46,13 @@ parameter metadata. Register meanings remain the responsibility of the caller.
 ```
 atrea.executeOneShotCommand(register_id, value)
 ```
+
+
+### Device display metadata
+
+`getPowerModeOptions()` reads the unit's `Power_2Z` display choices when its
+C10509 register confirms that profile. It returns an empty mapping for other
+profiles or unavailable metadata; a numeric value such as 33 is never enough
+to identify a discrete mode. The returned choices are labels, not write
+permissions for every operating mode. `loadUserLabels()` decodes the same
+legacy percent escapes as the unit GUI.

@@ -20,6 +20,7 @@ import urllib
 import hashlib
 import string
 import random
+import re
 from enum import IntEnum
 
 
@@ -70,6 +71,7 @@ class Atrea:
         self.configDir = {}
         self.gettingTranslations = False
         self.forcedModes = None
+        self.powerModeOptions = None
 
     def getBaseURL(self):
         return "http://" + self.ip + ":" + str(self.port) + "/"
@@ -429,15 +431,52 @@ class Atrea:
                 return self.forcedModes[self.getValue("H10712")]
         return AtreaMode.OFF
 
+    @staticmethod
+    def decodeUserLabel(value):
+        """Decode the legacy JavaScript escape format used by the unit GUI."""
+        value = re.sub(
+            r"%u([0-9a-fA-F]{4})|%([0-9a-fA-F]{2})",
+            lambda match: chr(int(match[1] or match[2], 16)), value,
+        )
+        return value.encode("utf-16", "surrogatepass").decode("utf-16", "surrogatepass")
+
+    def getPowerModeOptions(self):
+        """Read display labels only for a confirmed Power_2Z unit.
+
+        These are display options, not permission to write every option in every
+        operating mode. Missing metadata must never reinterpret percentages.
+        """
+        if str((self.getStatus() or {}).get("C10509")) != "1":
+            return {}
+        if self.powerModeOptions is not None:
+            return dict(self.powerModeOptions)
+        try:
+            response = requests.get(self.getURL("lang/userCtrl.xml"), timeout=10)
+            response.raise_for_status()
+            root = ET.fromstring(response.content)
+            options = root.find("./layout/options/op[@id='Power_2Z']")
+            if options is None:
+                return {}
+            labels = {}
+            for option in options.findall("i"):
+                code = int(option.attrib["id"])
+                label = option.attrib.get("title", "").strip()
+                if label and not label.startswith("$"):
+                    labels[code] = label
+            self.powerModeOptions = labels
+            return dict(labels)
+        except (requests.RequestException, ET.ParseError, ValueError, KeyError):
+            return {}
+
     def loadUserLabels(self):
         labels = {}
         response = requests.get(self.getURL("config/texts.xml"))
         if response.status_code == 200:
             xmldoc = ET.fromstring(response.content)
             textsNode = xmldoc.find("texts")
-            if textsNode:
+            if textsNode is not None:
                 for text in textsNode:
-                    labels[text.attrib["id"]] = text.attrib["value"]
+                    labels[text.attrib["id"]] = self.decodeUserLabel(text.attrib.get("value", ""))
         return labels
 
     def getProgram(self):
