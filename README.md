@@ -64,3 +64,12 @@ if atrea.setPowerMode(AtreaPowerMode.NORM_CIRC_MIN_VENT):
 `OFF`, `MIN_VENT`, and `NORM_VENT` preserve codes 0, 10, and 11. Discrete commands
 only target the supported `H10708` register. For percentage devices, continue
 using `setPower(percentage)` with its existing 12–100 range.
+
+### Device display metadata
+
+`getPowerModeOptions()` reads the unit's `Power_2Z` display choices when its
+C10509 register confirms that profile. It returns an empty mapping for other
+profiles or unavailable metadata; a numeric value such as 33 is never enough
+to identify a discrete mode. The returned choices are labels, not write
+permissions for every operating mode. `loadUserLabels()` decodes the same
+legacy percent escapes as the unit GUI.
