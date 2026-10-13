@@ -605,14 +605,24 @@ class Atrea:
         return True
 
     def exec(self):
-        url = self.getURL("config/xml.cgi")
+        """Send this batch once; renew an expired session before one retry."""
+        commands, self.commands = self.commands, {}
+        if not commands:
+            return False
+        payload = "".join("&" + register + value for register, value in commands.items())
 
-        if len(self.commands) > 0:
-            for register in self.commands:
-                url = url + "&" + register + self.commands[register]
-            response = requests.get(url)
-            return response.status_code == 200
-        return False
+        def send():
+            return requests.get(self.getURL("config/xml.cgi") + payload, timeout=10)
+
+        try:
+            response = send()
+            if response.status_code in (401, 403) or "HTTP: 403 Forbidden" in response.text:
+                self.auth()
+                response = send()
+            return response.status_code == 200 and "HTTP: 403 Forbidden" not in response.text
+        except requests.RequestException:
+            # The result may be uncertain. Do not replay this batch on a later action.
+            return False
 
     def executeOneShotCommand(self, register, value=1):
         """Execute a register command without adding it to the command queue."""
